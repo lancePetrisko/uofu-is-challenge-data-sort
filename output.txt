@@ -1,0 +1,290 @@
+==================================================================
+  COFFEE CART BUSINESS ANALYSIS REPORT
+  UofU IS Analytics Competition — Spring 2026
+==================================================================
+
+  Loading data from: 2010_coffee_cart_data 2026 (1).xlsx
+  Foot traffic rows: 1,464
+  Sales rows:        34,521
+  Trading days:      355
+  Total revenue:     $244,364.50
+
+==================================================================
+  Q1: WHEN IS COFFEE DEMAND HIGHEST?
+==================================================================
+
+--- Average Revenue per Active Day by Hour ---
+  Hour        Avg Revenue/Day
+  ---------------------------
+  7:00 – 7:59          $   65.01
+  8:00 – 8:59          $   65.59
+  9:00 – 9:59          $   62.02
+  10:00 – 10:59        $   62.51
+  11:00 – 11:59        $   62.99
+  12:00 – 12:59        $   62.32
+  13:00 – 13:59        $   63.73
+  14:00 – 14:59        $   44.79
+  15:00 – 15:59        $   42.09
+  16:00 – 16:59        $   47.88
+  17:00 – 17:59        $   44.52
+  18:00 – 18:59        $   25.01
+  19:00 – 19:59        $   25.35
+  20:00 – 20:59        $   24.03
+
+--- Revenue by Named Period ---
+  Morning          $255.13/day
+  Midday           $189.03/day
+  Afternoon        $134.75/day
+  Evening          $118.91/day
+
+--- Average Revenue per Day by Day of Week ---
+  Day             Avg Revenue/Day   # Unique Days
+  ---------------------------------------------
+  Monday                  $369.19              44
+  Tuesday                 $825.70              52
+  Wednesday               $843.48              52
+  Thursday                $830.25              52
+  Friday                  $802.41              52
+  Saturday                $653.90              53
+  Sunday                  $435.37              50
+
+  Weekday (Mon–Fri) avg: $734.20/day
+  Weekend (Sat–Sun) avg: $544.63/day
+
+--- Transactions and Unique Days by Season ---
+  Season        Transactions    Unique Days     Txn/Day
+  -------------------------------------------------
+  Winter                8018             83        96.6
+  Spring                9073             93        97.6
+  Summer                8380             93        90.1
+  Fall                  9050             86       105.2
+
+==================================================================
+  Q2: WHAT DRINKS ARE MOST POPULAR?
+==================================================================
+
+--- Overall Item Rankings ---
+  Rank                 Item      Qty       Revenue     Share
+  ----------------------------------------------------
+  1                   Latte     8303    $61,495.00     24.1%
+  2               Americano     6069    $36,172.00     17.6%
+  3              Cappuccino     5934    $43,695.00     17.2%
+  4             Iced Coffee     5391    $36,310.50     15.6%
+  5               Cold Brew     5342    $43,884.50     15.5%
+  6           Hot Chocolate     2638    $17,535.50      7.6%
+  7                Iced Tea      844     $5,272.00      2.4%
+
+--- Item Rankings by Season ---
+
+  Winter:
+    Item                    Qty     Share
+    Latte                  2245     28.0%
+    Cappuccino             1670     20.8%
+    Americano              1560     19.5%
+    Iced Coffee             825     10.3%
+    Hot Chocolate           821     10.2%
+    Cold Brew               756      9.4%
+    Iced Tea                141      1.8%
+
+  Spring:
+    Item                    Qty     Share
+    Latte                  2043     22.5%
+    Cold Brew              1603     17.7%
+    Iced Coffee            1591     17.5%
+    Americano              1537     16.9%
+    Cappuccino             1442     15.9%
+    Hot Chocolate           629      6.9%
+    Iced Tea                228      2.5%
+
+  Summer:
+    Item                    Qty     Share
+    Latte                  1765     21.1%
+    Cold Brew              1737     20.7%
+    Iced Coffee            1688     20.1%
+    Americano              1245     14.9%
+    Cappuccino             1230     14.7%
+    Hot Chocolate           453      5.4%
+    Iced Tea                262      3.1%
+
+  Fall:
+    Item                    Qty     Share
+    Latte                  2250     24.9%
+    Americano              1727     19.1%
+    Cappuccino             1592     17.6%
+    Iced Coffee            1287     14.2%
+    Cold Brew              1246     13.8%
+    Hot Chocolate           735      8.1%
+    Iced Tea                213      2.4%
+
+--- Hot vs Cold Drink Preference by Season ---
+  Season         Hot %    Cold %
+  ----------------------------
+  Winter         78.5%     21.5%
+  Spring         62.3%     37.7%
+  Summer         56.0%     44.0%
+  Fall           69.7%     30.3%
+
+==================================================================
+  Q3: HOW DOES WEATHER INFLUENCE CONSUMPTION?
+==================================================================
+
+--- Correlation: Daily Temperature vs Cold Drink Ratio ---
+
+  Pearson r (temp vs cold-drink ratio) = 0.783
+  Interpretation: STRONG positive correlation — warmer days drive cold drink demand.
+  Pearson r (temp vs total transactions) = -0.128
+  Interpretation: Temperature does NOT drive total sales volume — only drink type mix.
+
+--- Temperature Buckets vs Avg Daily Transaction Count ---
+  Temp Range      Days    Avg Txn/Day    Avg Cold %
+  ---------------------------------------------
+  < 20°F             6          116.2          7.1%
+  20–39°F          120           98.8         20.7%
+  40–54°F           79          103.8         39.9%
+  55–69°F           94           98.5         39.9%
+  70–84°F           56           80.4         47.3%
+
+--- Weather Type vs Mean Transaction Value ---
+  Weather Type        Transactions    Mean Value
+  --------------------------------------------
+  Clouds                     16215       $7.0845
+  Clear                      12872       $7.0758
+  Rain                        4291       $7.1180
+  Snow                        1143       $6.8825
+
+==================================================================
+  Q4: FOOT TRAFFIC vs SALES RELATIONSHIP
+==================================================================
+
+  Matched (date, slot) pairs: 1,464
+  Pearson r (foot traffic vs estimated slot transactions) = 0.525
+  Interpretation: Moderate-to-strong positive correlation.
+  Foot traffic is a useful but not sole predictor of sales volume.
+
+--- Conversion Rate by Timeslot (Estimated Txns per 100 Foot Traffic) ---
+  Slot            Avg Traffic    Avg Est. Txns    Conversion %
+  --------------------------------------------------------
+  Morning                 351             52.0          14.81%
+  Midday                  459             38.5           8.40%
+  Afternoon               326             27.3           8.35%
+  Evening                 133             22.8          17.10%
+
+==================================================================
+  Q5: WHAT OPERATING STRATEGY IS MOST EFFICIENT?
+==================================================================
+
+--- Revenue Efficiency by Hour ---
+  Hour          Avg Rev/Day     vs Peak
+  -----------------------------------
+  7:00–7:59          $65.01                   99%
+  8:00–8:59          $65.59                  100%
+  9:00–9:59          $62.02                   95%
+  10:00–10:59         $62.51                   95%
+  11:00–11:59         $62.99                   96%
+  12:00–12:59         $62.32                   95%
+  13:00–13:59         $63.73                   97%
+  14:00–14:59         $44.79                   68%
+  15:00–15:59         $42.09                   64%
+  16:00–16:59         $47.88                   73%
+  17:00–17:59         $44.52                   68%
+  18:00–18:59         $25.01      38% <-- drop-off
+  19:00–19:59         $25.35      39% <-- drop-off
+  20:00–20:59         $24.03      37% <-- drop-off
+
+  RECOMMENDATION: Operate core hours 7am–5pm (10 hours).
+  Hours 17–20 average <40% of morning peak — consider reduced evening staffing.
+
+--- Revenue by Day of Week ---
+  Day             Avg Rev/Day     vs Peak
+  -------------------------------------
+  Monday              $369.19           44% <-- low
+  Tuesday             $825.70                   98%
+  Wednesday           $843.48                  100%
+  Thursday            $830.25                   98%
+  Friday              $802.41                   95%
+  Saturday            $653.90                   78%
+  Sunday              $435.37           52% <-- low
+
+  RECOMMENDATION: Full staffing Tue–Sat.
+  Monday and Sunday are significantly below peak — consider reduced hours or single staff.
+
+--- Seasonal Revenue Share by Item (Menu Mix Recommendation) ---
+  Item                    Winter      Spring      Summer        Fall
+  ------------------------------------------------------------------
+  Latte                    29.4%       23.5%       22.2%       25.9%
+  Cold Brew                11.2%       20.1%       23.7%       16.5%
+  Cappuccino               21.6%       16.8%       15.4%       18.0%
+  Iced Coffee               9.9%       16.3%       18.8%       14.1%
+  Americano                16.1%       14.9%       12.6%       15.6%
+  Hot Chocolate            10.4%        6.3%        4.7%        7.6%
+  Iced Tea                  1.6%        2.2%        2.6%        2.3%
+
+  RECOMMENDATIONS:
+  • Winter/Fall: Feature Latte, Cappuccino, Americano (top 3 by share)
+  • Summer/Spring: Push Cold Brew and Iced Coffee prominently
+  • Hot Chocolate: Winter-only promotion (weak in Summer/Spring)
+  • Iced Tea: Consistently weakest item — minimal promotion in all seasons
+
+==================================================================
+  Q6: EXPECTED RANGE FOR AVERAGE DAILY SALES (95% CI)
+==================================================================
+
+  Population: 355 trading days
+  Mean daily revenue:  $688.35
+  Std deviation:       $286.11
+  Standard error:      $15.18
+  t-critical (95%, df=354): 1.9666
+
+  ┌─────────────────────────────────────────────────────────┐
+  │  95% Confidence Interval (t-distribution):              │
+  │  $  658.49  to  $718.21                          │
+  └─────────────────────────────────────────────────────────┘
+
+  We are 95% confident the true average daily sales fall
+  between $658.49 and $718.21.
+
+--- Bootstrap Validation (10,000 resamples, seed=42) ---
+
+  Bootstrap 95% CI: $658.24  to  $718.67
+  Bootstrap confirms the parametric estimate — results are consistent.
+  Sampling variability of ±$29.86 reflects the natural day-to-day spread.
+
+==================================================================
+  Q7 (BONUS): OPTIMAL 4-HOUR WINDOW TO MAXIMIZE REVENUE
+==================================================================
+
+--- All 4-Hour Windows — Ranked by Average Daily Revenue ---
+  Rank             Window     Avg Rev/Day
+  -------------------------------------
+  1          7:00 – 10:59          $247.11 <-- BEST
+  2          8:00 – 11:59                   $245.33
+  3         10:00 – 13:59                   $243.63
+  4          9:00 – 12:59                   $242.15
+  5         11:00 – 14:59                   $225.95
+  6         12:00 – 15:59                   $205.51
+  7         13:00 – 16:59                   $190.99
+  8         14:00 – 17:59                   $172.04
+  9         15:00 – 18:59                   $151.23
+  10        16:00 – 19:59                   $132.78
+  11        17:00 – 20:59                   $108.20
+
+  BEST OVERALL WINDOW: 7:00 – 10:59  ($247.11/day avg)
+
+--- Best 4-Hour Window by Season ---
+  Season           Best Window     Avg Rev/Day
+  ------------------------------------------
+  Winter          7:00 – 10:59         $253.03
+  Spring          7:00 – 10:59         $255.31
+  Summer         10:00 – 13:59         $241.85
+  Fall            7:00 – 10:59         $278.09
+
+--- Weekday vs Weekend Best Window ---
+  Weekday   : Best window = 7:00 – 10:59  ($267.75/day avg)
+  Weekend   : Best window = 7:00 – 10:59  ($196.48/day avg)
+
+  RECOMMENDATION: If limited to 4 hours, operate 7:00–10:59am for maximum revenue.
+  Exception: Summer months shift the peak to mid-morning/midday — adjust accordingly.
+
+==================================================================
+  END OF REPORT
+==================================================================

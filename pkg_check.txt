@@ -1,0 +1,6 @@
+Loading and processing data…
+Ready.
+kpis: {'total_revenue': 244364.5, 'n_days': 355, 'n_txns': 34521, 'mean_rev': 688.35, 'avg_tpd': 97.2}
+tabs ok: ['kpis', 'demand', 'drinks', 'weather', 'traffic', 'ci', 'window', 'seasons', 'items']
+window ranked[0]: {'label': '7:00–10:59', 'start': 7, 'avg': 254.77}
+ci: 658.49 718.21

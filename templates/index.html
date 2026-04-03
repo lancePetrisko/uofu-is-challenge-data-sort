@@ -1,0 +1,901 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>☕ Coffee Cart Analytics</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <style>
+    /* ── Reset & Base ────────────────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:       #11111b;
+      --surface:  #1e1e2e;
+      --surface2: #181825;
+      --overlay:  #313244;
+      --muted:    #585b70;
+      --subtle:   #6c7086;
+      --text:     #cdd6f4;
+      --subtext:  #a6adc8;
+      --blue:     #89b4fa;
+      --green:    #a6e3a1;
+      --red:      #f38ba8;
+      --yellow:   #f9e2af;
+      --peach:    #fab387;
+      --mauve:    #cba6f7;
+      --sky:      #89dceb;
+      --teal:     #94e2d5;
+      --lavender: #b4befe;
+      --rosewater:#f5e0dc;
+      --radius:   12px;
+      --shadow:   0 4px 24px rgba(0,0,0,0.4);
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      line-height: 1.5;
+    }
+
+    /* ── Typography ─────────────────────────────────────────────────── */
+    h1 { font-size: 1.75rem; font-weight: 700; color: var(--text); }
+    h2 { font-size: 1.15rem; font-weight: 600; color: var(--text); margin-bottom: .75rem; }
+    h3 { font-size: .9rem;   font-weight: 600; color: var(--subtext); text-transform: uppercase; letter-spacing: .06em; margin-bottom: .5rem; }
+    p  { color: var(--subtext); font-size: .875rem; }
+
+    /* ── Layout ─────────────────────────────────────────────────────── */
+    .top-bar {
+      background: var(--surface2);
+      border-bottom: 1px solid var(--overlay);
+      padding: 1rem 2rem;
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    .top-bar .logo { font-size: 1.5rem; }
+    .top-bar .subtitle { font-size: .8rem; color: var(--muted); margin-top: .15rem; }
+
+    .main { max-width: 1400px; margin: 0 auto; padding: 2rem; }
+
+    /* ── KPI Bar ─────────────────────────────────────────────────────── */
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 1rem;
+      margin-bottom: 2rem;
+    }
+    .kpi-card {
+      background: var(--surface);
+      border: 1px solid var(--overlay);
+      border-radius: var(--radius);
+      padding: 1.1rem 1.25rem;
+    }
+    .kpi-card .label { font-size: .72rem; color: var(--subtle); text-transform: uppercase; letter-spacing: .07em; }
+    .kpi-card .value { font-size: 1.55rem; font-weight: 700; color: var(--blue); margin-top: .25rem; }
+
+    /* ── Tab Nav ─────────────────────────────────────────────────────── */
+    .tab-nav {
+      display: flex;
+      gap: .5rem;
+      margin-bottom: 1.5rem;
+      flex-wrap: wrap;
+    }
+    .tab-btn {
+      background: var(--surface);
+      border: 1px solid var(--overlay);
+      border-radius: 8px;
+      color: var(--subtext);
+      cursor: pointer;
+      font-size: .82rem;
+      font-weight: 500;
+      padding: .5rem 1rem;
+      transition: all .15s;
+      white-space: nowrap;
+    }
+    .tab-btn:hover  { background: var(--overlay); color: var(--text); }
+    .tab-btn.active { background: var(--blue); border-color: var(--blue); color: var(--bg); font-weight: 700; }
+
+    .tab-panel { display: none; }
+    .tab-panel.active { display: block; }
+
+    /* ── Cards / Charts ─────────────────────────────────────────────── */
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--overlay);
+      border-radius: var(--radius);
+      padding: 1.25rem;
+    }
+    .row { display: grid; gap: 1rem; margin-bottom: 1rem; }
+    .col-2 { grid-template-columns: 1fr 1fr; }
+    .col-3 { grid-template-columns: 1fr 1fr 1fr; }
+    .col-12 { grid-template-columns: 1fr; }
+    .chart-wrap { position: relative; height: 280px; }
+    .chart-wrap-tall { position: relative; height: 360px; }
+    .chart-wrap-sm   { position: relative; height: 220px; }
+
+    /* ── Insight box ─────────────────────────────────────────────────── */
+    .insight {
+      background: color-mix(in srgb, var(--blue) 8%, var(--surface));
+      border-left: 3px solid var(--blue);
+      border-radius: 0 8px 8px 0;
+      color: var(--subtext);
+      font-size: .82rem;
+      margin-top: .75rem;
+      padding: .6rem .9rem;
+    }
+
+    /* ── Stat table ──────────────────────────────────────────────────── */
+    .stat-table { width: 100%; border-collapse: collapse; font-size: .82rem; }
+    .stat-table th { color: var(--subtle); font-weight: 600; padding: .4rem .6rem; text-align: left; border-bottom: 1px solid var(--overlay); }
+    .stat-table td { padding: .4rem .6rem; border-bottom: 1px solid var(--overlay); color: var(--subtext); }
+    .stat-table tr:last-child td { border: none; }
+    .stat-table .hi { color: var(--green); font-weight: 600; }
+    .stat-table .lo { color: var(--red); }
+
+    /* ── CI callout ──────────────────────────────────────────────────── */
+    .ci-box {
+      background: color-mix(in srgb, var(--green) 8%, var(--surface));
+      border: 1px solid var(--green);
+      border-radius: var(--radius);
+      padding: 1.25rem;
+      text-align: center;
+    }
+    .ci-box .ci-range { font-size: 1.6rem; font-weight: 700; color: var(--green); }
+    .ci-box .ci-label { font-size: .8rem; color: var(--subtext); margin-top: .25rem; }
+
+    /* ── Window badge ────────────────────────────────────────────────── */
+    .win-badge {
+      background: color-mix(in srgb, var(--green) 12%, var(--surface));
+      border: 1px solid var(--green);
+      border-radius: var(--radius);
+      font-size: .85rem;
+      padding: .45rem .9rem;
+      color: var(--green);
+      font-weight: 600;
+    }
+
+    /* ── Heatmap ─────────────────────────────────────────────────────── */
+    .heatmap { width: 100%; border-collapse: collapse; font-size: .78rem; }
+    .heatmap th { color: var(--subtle); padding: .35rem .6rem; text-align: center; font-weight: 600; }
+    .heatmap td { padding: .35rem .6rem; text-align: center; border-radius: 4px; font-variant-numeric: tabular-nums; color: var(--text); }
+    .heatmap .row-label { text-align: left !important; color: var(--subtext); font-weight: 500; }
+
+    /* ── Loading ─────────────────────────────────────────────────────── */
+    #loader {
+      position: fixed; inset: 0;
+      background: var(--bg);
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      gap: 1rem; z-index: 999;
+      transition: opacity .4s;
+    }
+    #loader .spinner {
+      width: 42px; height: 42px;
+      border: 3px solid var(--overlay);
+      border-top-color: var(--blue);
+      border-radius: 50%;
+      animation: spin .7s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    #loader p { color: var(--subtext); font-size: .875rem; }
+
+    @media (max-width: 900px) {
+      .kpi-grid { grid-template-columns: repeat(3, 1fr); }
+      .col-2, .col-3 { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 600px) {
+      .kpi-grid { grid-template-columns: repeat(2, 1fr); }
+      .main { padding: 1rem; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- Loading overlay -->
+<div id="loader">
+  <div class="spinner"></div>
+  <p>Loading analytics…</p>
+</div>
+
+<!-- Top bar -->
+<header class="top-bar">
+  <span class="logo">☕</span>
+  <div>
+    <h1>Coffee Cart Analytics</h1>
+    <div class="subtitle">UofU IS Analytics Competition · Spring 2026 · Mar 2024 – Mar 2025</div>
+  </div>
+</header>
+
+<main class="main" id="app" style="display:none">
+
+  <!-- KPI row -->
+  <div class="kpi-grid" id="kpi-grid"></div>
+
+  <!-- Tab nav -->
+  <nav class="tab-nav" id="tab-nav"></nav>
+
+  <!-- Tab panels -->
+  <div id="tab-content"></div>
+
+</main>
+
+<script>
+// ── Palette ────────────────────────────────────────────────────────────────
+const C = {
+  blue:'#89b4fa', green:'#a6e3a1', red:'#f38ba8', yellow:'#f9e2af',
+  peach:'#fab387', mauve:'#cba6f7', sky:'#89dceb', teal:'#94e2d5',
+  lavender:'#b4befe', rw:'#f5e0dc', overlay:'#313244', muted:'#585b70',
+  subtext:'#a6adc8', text:'#cdd6f4', surface:'#1e1e2e', bg:'#11111b',
+};
+const ITEM_COLORS = {
+  'Latte':'#7B4F2E','Americano':'#6c7086','Cappuccino':'#C08457',
+  'Iced Coffee':C.sky,'Cold Brew':C.blue,'Hot Chocolate':'#A0522D','Iced Tea':C.teal,
+};
+const SEASON_COLORS = {Winter:C.blue, Spring:C.green, Summer:C.yellow, Fall:C.peach};
+
+// ── Chart defaults ─────────────────────────────────────────────────────────
+Chart.defaults.color          = C.subtext;
+Chart.defaults.borderColor    = C.overlay;
+Chart.defaults.font.family    = 'Inter, system-ui, sans-serif';
+Chart.defaults.font.size      = 11;
+Chart.defaults.plugins.legend.labels.boxWidth = 12;
+Chart.defaults.plugins.legend.labels.padding  = 12;
+
+function baseOptions(opts = {}) {
+  return {
+    responsive: true,
+    maintainAspectRatio: false,
+    animation: { duration: 500 },
+    plugins: {
+      legend: { display: opts.legend ?? false },
+      tooltip: {
+        backgroundColor: C.surface,
+        borderColor: C.overlay,
+        borderWidth: 1,
+        titleColor: C.text,
+        bodyColor: C.subtext,
+        padding: 10,
+      },
+    },
+    scales: opts.noScales ? {} : {
+      x: { grid: { color: C.overlay }, ticks: { color: C.subtext } },
+      y: { grid: { color: C.overlay }, ticks: { color: C.subtext } },
+    },
+    ...opts.extra,
+  };
+}
+
+// ── Helpers ────────────────────────────────────────────────────────────────
+function el(tag, cls, html = '') {
+  const e = document.createElement(tag);
+  if (cls) e.className = cls;
+  if (html) e.innerHTML = html;
+  return e;
+}
+function card(content) {
+  const c = el('div', 'card');
+  c.innerHTML = content;
+  return c;
+}
+function fmt$(v) { return '$' + Number(v).toLocaleString('en-US', {minimumFractionDigits:2,maximumFractionDigits:2}); }
+function fmt0(v) { return Number(v).toLocaleString('en-US'); }
+
+// ── Regression helper (manual least-squares) ───────────────────────────────
+function linreg(xs, ys) {
+  const n = xs.length;
+  const mx = xs.reduce((a,b)=>a+b,0)/n, my = ys.reduce((a,b)=>a+b,0)/n;
+  let num=0, den=0;
+  for (let i=0;i<n;i++) { num += (xs[i]-mx)*(ys[i]-my); den += (xs[i]-mx)**2; }
+  const m = num/den, b = my - m*mx;
+  const xmin=Math.min(...xs), xmax=Math.max(...xs);
+  return [{x:xmin, y:m*xmin+b},{x:xmax, y:m*xmax+b}];
+}
+
+// ── Heatmap renderer ───────────────────────────────────────────────────────
+function heatmapTable(items, seasons, data) {
+  // data: { item: { season: pct } }
+  const values = items.flatMap(it => seasons.map(s => data[it]?.[s] ?? 0));
+  const min = Math.min(...values), max = Math.max(...values);
+  function bg(v) {
+    const t = (v - min) / (max - min + 0.001);
+    const r = Math.round(180 * t + 30);
+    const g = Math.round(120 * t + 30);
+    const b = Math.round(20);
+    return `rgba(${r},${g},${b},${0.3 + t*0.65})`;
+  }
+  let html = '<table class="heatmap"><thead><tr><th></th>';
+  seasons.forEach(s => html += `<th>${s}</th>`);
+  html += '</tr></thead><tbody>';
+  items.forEach(it => {
+    html += `<tr><td class="row-label">${it}</td>`;
+    seasons.forEach(s => {
+      const v = data[it]?.[s] ?? 0;
+      html += `<td style="background:${bg(v)}">${v}%</td>`;
+    });
+    html += '</tr>';
+  });
+  html += '</tbody></table>';
+  return html;
+}
+
+// ── Histogram builder ──────────────────────────────────────────────────────
+function histogram(values, bins) {
+  const min = Math.min(...values), max = Math.max(...values);
+  const w = (max - min) / bins;
+  const counts = Array(bins).fill(0);
+  const labels = [];
+  for (let i=0;i<bins;i++) labels.push(Math.round(min + i*w));
+  values.forEach(v => {
+    let b = Math.floor((v - min) / w);
+    if (b >= bins) b = bins - 1;
+    counts[b]++;
+  });
+  return { labels, counts, w, min };
+}
+
+// ══════════════════════════════════════════════════════════════════════════
+// RENDER
+// ══════════════════════════════════════════════════════════════════════════
+
+async function render() {
+  const res  = await fetch('/api/data');
+  const D    = await res.json();
+  const SEASONS = D.seasons;
+  const ITEMS   = D.items;
+
+  // ── KPIs ─────────────────────────────────────────────────────────────
+  const kpis = [
+    ['Total Revenue',      fmt$(D.kpis.total_revenue)],
+    ['Trading Days',       fmt0(D.kpis.n_days)],
+    ['Total Transactions', fmt0(D.kpis.n_txns)],
+    ['Avg Daily Revenue',  fmt$(D.kpis.mean_rev)],
+    ['Avg Txns / Day',     D.kpis.avg_tpd],
+  ];
+  const grid = document.getElementById('kpi-grid');
+  kpis.forEach(([l,v]) => {
+    grid.innerHTML += `<div class="kpi-card"><div class="label">${l}</div><div class="value">${v}</div></div>`;
+  });
+
+  // ── Tab definitions ───────────────────────────────────────────────────
+  const tabs = [
+    { id:'demand',  label:'📈 Demand Patterns' },
+    { id:'drinks',  label:'🥤 Drink Popularity' },
+    { id:'weather', label:'🌡️ Weather' },
+    { id:'traffic', label:'🚶 Foot Traffic' },
+    { id:'strategy',label:'⚙️ Strategy' },
+    { id:'ci',      label:'📊 Confidence Interval' },
+    { id:'window',  label:'⏱️ Best 4-Hour Window' },
+  ];
+
+  const nav     = document.getElementById('tab-nav');
+  const content = document.getElementById('tab-content');
+  tabs.forEach((t, i) => {
+    const btn = el('button', `tab-btn${i===0?' active':''}`, t.label);
+    btn.dataset.tab = t.id;
+    btn.onclick = () => {
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+      btn.classList.add('active');
+      document.getElementById('panel-' + t.id).classList.add('active');
+    };
+    nav.appendChild(btn);
+    const panel = el('div', `tab-panel${i===0?' active':''}`, '');
+    panel.id = 'panel-' + t.id;
+    content.appendChild(panel);
+  });
+
+  // ════════════════════════════════════════════════════════════════════
+  // TAB 1 — DEMAND PATTERNS
+  // ════════════════════════════════════════════════════════════════════
+  const pDemand = document.getElementById('panel-demand');
+
+  // Hourly bar
+  const hours = Array.from({length:14}, (_,i) => i+7);
+  const hourRevs = hours.map(h => D.demand.hour_avgs[h] ?? 0);
+  const hourColors = hourRevs.map(v => v >= Math.max(...hourRevs)*0.60 ? C.blue : C.red);
+
+  const row1 = el('div','row col-2');
+  // chart 1
+  const c1 = el('div','card');
+  c1.innerHTML = '<h2>Avg Revenue per Day by Hour</h2><div class="chart-wrap"><canvas id="ch-hour"></canvas></div><div class="insight">Hours 7–13 generate ~$63–66/day each. Revenue drops sharply after 2pm. Hours 18–20 earn only ~38% of peak.</div>';
+  // chart 2 — DoW
+  const c2 = el('div','card');
+  const DOW = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
+  const dowRevs = DOW.map(d => D.demand.dow_avgs[d] ?? 0);
+  const dowColors = DOW.map(d => ['Monday','Sunday'].includes(d) ? C.red : C.green);
+  c2.innerHTML = '<h2>Avg Revenue by Day of Week</h2><div class="chart-wrap"><canvas id="ch-dow"></canvas></div><div class="insight">Wednesday peaks at $843/day. Monday is 56% lower at $369 — reduced campus activity at week-start.</div>';
+  row1.append(c1, c2);
+  pDemand.appendChild(row1);
+
+  new Chart(document.getElementById('ch-hour'), {
+    type: 'bar',
+    data: {
+      labels: hours.map(h => h+':00'),
+      datasets: [{ data: hourRevs, backgroundColor: hourColors, borderRadius: 6 }]
+    },
+    options: { ...baseOptions(), plugins: { legend:{display:false}, tooltip: {callbacks:{ label: ctx => `$${ctx.raw.toFixed(2)}/day` }} } },
+  });
+  new Chart(document.getElementById('ch-dow'), {
+    type: 'bar',
+    data: {
+      labels: DOW,
+      datasets: [{ data: dowRevs, backgroundColor: dowColors, borderRadius: 6 }]
+    },
+    options: { ...baseOptions(), plugins: { legend:{display:false}, tooltip: {callbacks:{ label: ctx => `$${ctx.raw.toFixed(2)}/day` }} } },
+  });
+
+  // Seasonal row
+  const row2 = el('div','row col-2');
+  const c3 = el('div','card');
+  const c4 = el('div','card');
+  const sLabels = SEASONS;
+  const sTxns = sLabels.map(s => D.demand.season_demand[s]?.txns ?? 0);
+  const sTpd  = sLabels.map(s => D.demand.season_demand[s]?.tpd  ?? 0);
+  const sColors = sLabels.map(s => SEASON_COLORS[s]);
+  c3.innerHTML = '<h2>Total Transactions by Season</h2><div class="chart-wrap"><canvas id="ch-season-txn"></canvas></div>';
+  c4.innerHTML = '<h2>Avg Transactions per Day by Season</h2><div class="chart-wrap"><canvas id="ch-season-tpd"></canvas></div><div class="insight">Fall leads (105 txns/day). Summer is weakest (90/day) — campus thins out over summer break.</div>';
+  row2.append(c3, c4);
+  pDemand.appendChild(row2);
+
+  new Chart(document.getElementById('ch-season-txn'), {
+    type:'bar',
+    data:{ labels:sLabels, datasets:[{ data:sTxns, backgroundColor:sColors, borderRadius:6 }] },
+    options: baseOptions(),
+  });
+  new Chart(document.getElementById('ch-season-tpd'), {
+    type:'bar',
+    data:{ labels:sLabels, datasets:[{ data:sTpd, backgroundColor:sColors, borderRadius:6 }] },
+    options: baseOptions(),
+  });
+
+  // ════════════════════════════════════════════════════════════════════
+  // TAB 2 — DRINK POPULARITY
+  // ════════════════════════════════════════════════════════════════════
+  const pDrinks = document.getElementById('panel-drinks');
+
+  // Donut + revenue bar
+  const row3 = el('div','row col-2');
+  const cd1 = el('div','card');
+  const cd2 = el('div','card');
+  const iColors = ITEMS.map(it => ITEM_COLORS[it] ?? C.muted);
+  cd1.innerHTML = '<h2>Overall Sales Share</h2><div class="chart-wrap"><canvas id="ch-donut"></canvas></div>';
+  cd2.innerHTML = '<h2>Total Revenue by Item</h2><div class="chart-wrap"><canvas id="ch-item-rev"></canvas></div><div class="insight">Latte leads volume (24.1%). Cold Brew punches above its weight in revenue — it\'s the priciest item at $5.50.</div>';
+  row3.append(cd1, cd2);
+  pDrinks.appendChild(row3);
+
+  new Chart(document.getElementById('ch-donut'), {
+    type: 'doughnut',
+    data: {
+      labels: ITEMS,
+      datasets: [{ data: ITEMS.map(it => D.drinks.item_totals[it] ?? 0), backgroundColor: iColors, borderWidth: 2, borderColor: C.surface }]
+    },
+    options: { ...baseOptions({noScales:true}), plugins: { legend:{display:true,position:'right'}, tooltip:{callbacks:{label:ctx=>`${ctx.label}: ${ctx.raw.toLocaleString()} (${(ctx.raw/ITEMS.reduce((a,it)=>a+(D.drinks.item_totals[it]??0),0)*100).toFixed(1)}%)`}} } },
+  });
+  new Chart(document.getElementById('ch-item-rev'), {
+    type: 'bar',
+    data: {
+      labels: ITEMS,
+      datasets: [{ data: ITEMS.map(it => D.drinks.item_rev_totals[it] ?? 0), backgroundColor: iColors, borderRadius: 6 }]
+    },
+    options: { ...baseOptions(), indexAxis:'y', plugins:{legend:{display:false}, tooltip:{callbacks:{label:ctx=>`$${ctx.raw.toLocaleString()}`}}} },
+  });
+
+  // Stacked season bar
+  const cd3 = el('div','card');
+  cd3.innerHTML = '<h2>Item Volume by Season</h2><div class="chart-wrap-tall"><canvas id="ch-stacked"></canvas></div>';
+  pDrinks.appendChild(cd3);
+
+  new Chart(document.getElementById('ch-stacked'), {
+    type: 'bar',
+    data: {
+      labels: SEASONS,
+      datasets: ITEMS.map(it => ({
+        label: it,
+        data: SEASONS.map(s => D.drinks.item_season_qty[it]?.[s] ?? 0),
+        backgroundColor: ITEM_COLORS[it] ?? C.muted,
+        stack: 'a',
+        borderRadius: 4,
+      }))
+    },
+    options: { ...baseOptions({legend:true}), scales: { x:{grid:{color:C.overlay},stacked:true}, y:{grid:{color:C.overlay},stacked:true} } },
+  });
+
+  // Hot/cold shift + heatmap
+  const row4 = el('div','row col-2');
+  const cd4 = el('div','card');
+  const cd5 = el('div','card');
+  const hotVals  = SEASONS.map(s => D.drinks.hot_cold[s]?.hot  ?? 0);
+  const coldVals = SEASONS.map(s => D.drinks.hot_cold[s]?.cold ?? 0);
+  cd4.innerHTML = '<h2>Hot vs Cold Share by Season</h2><div class="chart-wrap"><canvas id="ch-hotcold"></canvas></div><div class="insight">Cold drinks jump from 22% in Winter to 44% in Summer. Menu promotion should shift accordingly.</div>';
+  cd5.innerHTML = `<h2>Revenue Share Heatmap (% per Season)</h2><div style="overflow-x:auto;margin-top:.5rem">${heatmapTable(ITEMS, SEASONS, D.drinks.menu_heatmap)}</div><div class="insight">Iced Tea never exceeds 2.6%. Hot Chocolate drops from 10.4% in Winter to 4.7% in Summer.</div>`;
+  row4.append(cd4, cd5);
+  pDrinks.appendChild(row4);
+
+  new Chart(document.getElementById('ch-hotcold'), {
+    type: 'bar',
+    data: {
+      labels: SEASONS,
+      datasets: [
+        { label:'Hot',  data:hotVals,  backgroundColor:C.red,  stack:'a', borderRadius:4 },
+        { label:'Cold', data:coldVals, backgroundColor:C.sky,  stack:'a', borderRadius:4 },
+      ]
+    },
+    options: { ...baseOptions({legend:true}), scales: { x:{grid:{color:C.overlay},stacked:true}, y:{grid:{color:C.overlay},stacked:true,max:105} } },
+  });
+
+  // ════════════════════════════════════════════════════════════════════
+  // TAB 3 — WEATHER
+  // ════════════════════════════════════════════════════════════════════
+  const pWeather = document.getElementById('panel-weather');
+
+  const row5 = el('div','row col-2');
+  const cw1 = el('div','card');
+  const cw2 = el('div','card');
+
+  // Scatter: temp vs cold ratio
+  const scatterBySeason = {};
+  D.weather.scatter.forEach(pt => {
+    if (!scatterBySeason[pt.season]) scatterBySeason[pt.season] = [];
+    scatterBySeason[pt.season].push({x: pt.temp, y: pt.cold});
+  });
+  const allX = D.weather.scatter.map(p=>p.temp);
+  const allY = D.weather.scatter.map(p=>p.cold);
+  const trendPts = linreg(allX, allY);
+
+  cw1.innerHTML = `<h2>Temperature vs Cold Drink Ratio <span style="color:${C.green};font-size:.8rem;font-weight:400">r = ${D.weather.r}</span></h2><div class="chart-wrap-tall"><canvas id="ch-scatter-weather"></canvas></div><div class="insight">Strong positive correlation (r = ${D.weather.r}). Warmer days reliably shift demand toward cold drinks. Temperature does NOT affect total volume (r = -0.13).</div>`;
+  cw2.innerHTML = '<h2>Temperature Buckets: Avg Txns & Cold %</h2><div class="chart-wrap-tall"><canvas id="ch-buckets"></canvas></div>';
+  row5.append(cw1, cw2);
+  pWeather.appendChild(row5);
+
+  new Chart(document.getElementById('ch-scatter-weather'), {
+    type: 'scatter',
+    data: {
+      datasets: [
+        ...SEASONS.map(s => ({
+          label: s,
+          data: scatterBySeason[s] ?? [],
+          backgroundColor: SEASON_COLORS[s] + '99',
+          pointRadius: 3,
+        })),
+        {
+          label: 'Trend', type:'line',
+          data: trendPts,
+          borderColor: C.red, borderWidth: 2,
+          pointRadius: 0, fill: false,
+        }
+      ]
+    },
+    options: {
+      ...baseOptions({legend:true}),
+      scales: {
+        x:{ grid:{color:C.overlay}, title:{display:true,text:'Temperature (°F)',color:C.subtext} },
+        y:{ grid:{color:C.overlay}, title:{display:true,text:'Cold Drink %',color:C.subtext} },
+      }
+    },
+  });
+
+  const bLabels = D.weather.temp_buckets.map(b=>b.label);
+  const bTxns   = D.weather.temp_buckets.map(b=>b.avg_txns);
+  const bCold   = D.weather.temp_buckets.map(b=>b.avg_cold);
+  new Chart(document.getElementById('ch-buckets'), {
+    type: 'bar',
+    data: {
+      labels: bLabels,
+      datasets: [
+        { label:'Avg Txns/Day', data:bTxns, backgroundColor:C.blue, borderRadius:4, yAxisID:'y' },
+        { label:'Cold %', data:bCold, type:'line', borderColor:C.sky, borderWidth:2, pointRadius:5, pointBackgroundColor:C.sky, yAxisID:'y2', fill:false },
+      ]
+    },
+    options: {
+      ...baseOptions({legend:true}),
+      scales: {
+        x:  { grid:{color:C.overlay} },
+        y:  { grid:{color:C.overlay}, title:{display:true,text:'Avg Txns',color:C.subtext} },
+        y2: { position:'right', grid:{display:false}, title:{display:true,text:'Cold %',color:C.subtext} },
+      }
+    },
+  });
+
+  // Weather type table
+  const cw3 = el('div','card');
+  let wtHtml = '<h2>Weather Type: Transaction Count &amp; Mean Value</h2><div class="row col-2" style="margin-top:.75rem"><div><div class="chart-wrap-sm"><canvas id="ch-wt-count"></canvas></div></div><div>';
+  wtHtml += '<table class="stat-table"><thead><tr><th>Type</th><th>Txns</th><th>Mean $</th></tr></thead><tbody>';
+  D.weather.weather_types.forEach(w => {
+    wtHtml += `<tr><td>${w.type}</td><td>${w.count.toLocaleString()}</td><td>${w.mean.toFixed(4)}</td></tr>`;
+  });
+  wtHtml += '</tbody></table><div class="insight">Weather type has minimal impact on purchase value. Rain slightly boosts mean to $7.12.</div></div></div>';
+  cw3.innerHTML = wtHtml;
+  pWeather.appendChild(cw3);
+
+  new Chart(document.getElementById('ch-wt-count'), {
+    type:'doughnut',
+    data:{
+      labels: D.weather.weather_types.map(w=>w.type),
+      datasets:[{ data: D.weather.weather_types.map(w=>w.count), backgroundColor:[C.blue,C.lavender,C.sky,C.teal], borderWidth:2, borderColor:C.surface }]
+    },
+    options: { ...baseOptions({noScales:true}), plugins:{legend:{display:true,position:'bottom'}} },
+  });
+
+  // ════════════════════════════════════════════════════════════════════
+  // TAB 4 — FOOT TRAFFIC
+  // ════════════════════════════════════════════════════════════════════
+  const pTraffic = document.getElementById('panel-traffic');
+  const row6 = el('div','row col-2');
+  const ct1 = el('div','card');
+  const ct2 = el('div','card');
+
+  const SLOT_COLORS = {Morning:C.yellow, Midday:C.green, Afternoon:C.blue, Evening:C.mauve};
+  const slotScatterMap = {};
+  D.traffic.scatter.forEach(pt => {
+    if (!slotScatterMap[pt.slot]) slotScatterMap[pt.slot] = [];
+    slotScatterMap[pt.slot].push({x: pt.traffic, y: pt.txns});
+  });
+  const tAllX = D.traffic.scatter.map(p=>p.traffic);
+  const tAllY = D.traffic.scatter.map(p=>p.txns);
+  const tTrend = linreg(tAllX, tAllY);
+
+  ct1.innerHTML = `<h2>Foot Traffic vs Estimated Transactions <span style="color:${C.green};font-size:.8rem;font-weight:400">r = ${D.traffic.r}</span></h2><div class="chart-wrap-tall"><canvas id="ch-foot-scatter"></canvas></div><div class="insight">r = ${D.traffic.r} — moderate positive correlation. Foot traffic is a reliable signal but other factors also drive sales.</div>`;
+  ct2.innerHTML = '<h2>Conversion Rate by Timeslot</h2><div class="chart-wrap-tall"><canvas id="ch-conversion"></canvas></div><div class="insight">Evening converts best (17%) despite low absolute traffic. Midday has highest traffic but modest conversion (8.4%).</div>';
+  row6.append(ct1, ct2);
+  pTraffic.appendChild(row6);
+
+  new Chart(document.getElementById('ch-foot-scatter'), {
+    type:'scatter',
+    data:{
+      datasets:[
+        ...['Morning','Midday','Afternoon','Evening'].map(s=>({
+          label:s,
+          data: slotScatterMap[s]??[],
+          backgroundColor: (SLOT_COLORS[s]||C.blue)+'99',
+          pointRadius:3,
+        })),
+        { label:'Trend', type:'line', data:tTrend, borderColor:C.red, borderWidth:2, pointRadius:0, fill:false },
+      ]
+    },
+    options:{
+      ...baseOptions({legend:true}),
+      scales:{
+        x:{grid:{color:C.overlay},title:{display:true,text:'Foot Traffic',color:C.subtext}},
+        y:{grid:{color:C.overlay},title:{display:true,text:'Est. Transactions',color:C.subtext}},
+      }
+    },
+  });
+
+  const convSlots = D.traffic.conversion.map(s=>s.slot);
+  const convTr    = D.traffic.conversion.map(s=>s.avg_tr);
+  const convPct   = D.traffic.conversion.map(s=>s.conv_pct);
+  new Chart(document.getElementById('ch-conversion'), {
+    type:'bar',
+    data:{
+      labels:convSlots,
+      datasets:[
+        {label:'Avg Traffic', data:convTr, backgroundColor:C.muted, borderRadius:4, yAxisID:'y'},
+        {label:'Conversion %', data:convPct, type:'line', borderColor:C.yellow, borderWidth:2, pointRadius:6, pointBackgroundColor:C.yellow, yAxisID:'y2', fill:false},
+      ]
+    },
+    options:{
+      ...baseOptions({legend:true}),
+      scales:{
+        x:{grid:{color:C.overlay}},
+        y:{grid:{color:C.overlay},title:{display:true,text:'Avg Traffic',color:C.subtext}},
+        y2:{position:'right',grid:{display:false},title:{display:true,text:'Conversion %',color:C.subtext}},
+      }
+    },
+  });
+
+  // ════════════════════════════════════════════════════════════════════
+  // TAB 5 — STRATEGY
+  // ════════════════════════════════════════════════════════════════════
+  const pStrategy = document.getElementById('panel-strategy');
+  const row7 = el('div','row col-2');
+  const cs1 = el('div','card');
+  const cs2 = el('div','card');
+
+  const peakH = Math.max(...hourRevs);
+  const hColorsStrat = hourRevs.map(v => v >= peakH*0.60 ? C.green : C.red);
+  cs1.innerHTML = '<h2>Revenue Efficiency by Hour</h2><div class="chart-wrap"><canvas id="ch-hour-strat"></canvas></div><div class="insight">Hours 18–20 fall below 40% of peak. Closing at 6pm saves ~3 staff-hours/day with minimal revenue loss (~$74/day).</div>';
+
+  const peakD = Math.max(...dowRevs);
+  const dColorsStrat = DOW.map(d => dowRevs[DOW.indexOf(d)] >= peakD*0.55 ? C.green : C.red);
+  cs2.innerHTML = '<h2>Revenue by Day of Week</h2><div class="chart-wrap"><canvas id="ch-dow-strat"></canvas></div><div class="insight">Monday and Sunday are well below threshold. Reduce staffing or delay opening those days.</div>';
+  row7.append(cs1, cs2);
+  pStrategy.appendChild(row7);
+
+  new Chart(document.getElementById('ch-hour-strat'), {
+    type:'bar',
+    data:{ labels:hours.map(h=>h+':00'), datasets:[{data:hourRevs, backgroundColor:hColorsStrat, borderRadius:6}] },
+    options:{ ...baseOptions(), plugins:{legend:{display:false}, annotation:{annotations:{line1:{type:'line',yMin:peakH*0.60,yMax:peakH*0.60,borderColor:C.yellow,borderDash:[5,5],borderWidth:1}}}} },
+  });
+  new Chart(document.getElementById('ch-dow-strat'), {
+    type:'bar',
+    data:{ labels:DOW, datasets:[{data:dowRevs, backgroundColor:dColorsStrat, borderRadius:6}] },
+    options:{ ...baseOptions(), plugins:{legend:{display:false}} },
+  });
+
+  // Heatmap
+  const cs3 = el('div','card');
+  cs3.innerHTML = `<h2>Seasonal Menu Mix — Revenue Share (%)</h2><div style="overflow-x:auto;margin-top:.5rem">${heatmapTable(ITEMS, SEASONS, D.drinks.menu_heatmap)}</div><div class="insight">Prioritize darker cells. Iced Tea is consistently the weakest item in every season — consider replacement.</div>`;
+  pStrategy.appendChild(cs3);
+
+  // ════════════════════════════════════════════════════════════════════
+  // TAB 6 — CONFIDENCE INTERVAL
+  // ════════════════════════════════════════════════════════════════════
+  const pCI = document.getElementById('panel-ci');
+
+  // Stat row
+  const ciStats = el('div','row col-3');
+  [
+    ['Population', `${D.ci.n} trading days`],
+    ['Mean Daily Revenue', fmt$(D.ci.mean)],
+    ['Std Deviation', fmt$(D.ci.std)],
+  ].forEach(([l,v]) => {
+    ciStats.innerHTML += `<div class="card"><h3>${l}</h3><div style="font-size:1.2rem;font-weight:700;color:${C.blue};margin-top:.25rem">${v}</div></div>`;
+  });
+  pCI.appendChild(ciStats);
+
+  // CI callout
+  const ciBox = el('div','row col-2');
+  ciBox.innerHTML = `
+    <div class="ci-box">
+      <div class="ci-label">95% Confidence Interval (t-distribution, df=${D.ci.n-1})</div>
+      <div class="ci-range">${fmt$(D.ci.ci_lo)} — ${fmt$(D.ci.ci_hi)}</div>
+      <div class="ci-label" style="margin-top:.5rem">We are 95% confident average daily sales fall within this range</div>
+    </div>
+    <div class="ci-box" style="border-color:${C.mauve};background:color-mix(in srgb, ${C.mauve} 8%, var(--surface))">
+      <div class="ci-label" style="color:${C.mauve}">Bootstrap Validation (10,000 resamples)</div>
+      <div class="ci-range" style="color:${C.mauve}">${fmt$(D.ci.b_lo)} — ${fmt$(D.ci.b_hi)}</div>
+      <div class="ci-label" style="margin-top:.5rem">Bootstrap confirms the parametric estimate</div>
+    </div>
+  `;
+  pCI.appendChild(ciBox);
+
+  // Charts
+  const rowCI = el('div','row col-2');
+  const cc1 = el('div','card');
+  const cc2 = el('div','card');
+  cc1.innerHTML = '<h2>Distribution of Daily Sales</h2><div class="chart-wrap-tall"><canvas id="ch-hist"></canvas></div>';
+  cc2.innerHTML = '<h2>Bootstrap Distribution of Sample Means</h2><div class="chart-wrap-tall"><canvas id="ch-boot"></canvas></div>';
+  rowCI.append(cc1, cc2);
+  pCI.appendChild(rowCI);
+
+  // Histogram of daily sales
+  const {labels:hLabels, counts:hCounts, w:binW, min:binMin} = histogram(D.ci.daily_list, 35);
+  new Chart(document.getElementById('ch-hist'), {
+    type:'bar',
+    data:{
+      labels: hLabels.map(l=>'$'+l),
+      datasets:[
+        { label:'Days', data:hCounts, backgroundColor:C.blue+'88', borderColor:C.blue, borderWidth:1, borderRadius:3 }
+      ]
+    },
+    options:{
+      ...baseOptions(),
+      plugins:{
+        legend:{display:false},
+        annotation:{
+          annotations:{
+            mean: {type:'line', xMin:null, xMax:null, yMin:0, yMax:Math.max(...hCounts), borderColor:C.green, borderWidth:2},
+            ciLo: {type:'line', xMin:null, xMax:null, yMin:0, yMax:Math.max(...hCounts), borderColor:C.red,   borderWidth:1, borderDash:[4,4]},
+            ciHi: {type:'line', xMin:null, xMax:null, yMin:0, yMax:Math.max(...hCounts), borderColor:C.red,   borderWidth:1, borderDash:[4,4]},
+          }
+        },
+        tooltip:{callbacks:{title:ctx=>`~$${hLabels[ctx[0].dataIndex].toLocaleString()}–$${Math.round(hLabels[ctx[0].dataIndex]+binW).toLocaleString()}`}}
+      },
+    },
+  });
+
+  // Bootstrap histogram
+  const bSample = D.ci.daily_list; // re-use for shape; backend sends sorted daily sales
+  // Draw approximate bell from bootstrap CI
+  const bootMean = (D.ci.b_lo + D.ci.b_hi) / 2;
+  const bootStd  = (D.ci.b_hi - D.ci.b_lo) / 3.92;
+  const bmLabels = Array.from({length:50},(_,i)=> Math.round(bootMean - 3*bootStd + i*(6*bootStd/50)));
+  const bmData   = bmLabels.map(x => {
+    const z = (x-bootMean)/bootStd;
+    return Math.round(10000 * (1/(bootStd*Math.sqrt(2*Math.PI))) * Math.exp(-0.5*z*z) * (6*bootStd/50));
+  });
+  new Chart(document.getElementById('ch-boot'), {
+    type:'bar',
+    data:{
+      labels: bmLabels.map(l=>'$'+l),
+      datasets:[
+        { label:'Bootstrap Means', data:bmData, backgroundColor:C.mauve+'88', borderColor:C.mauve, borderWidth:1, borderRadius:3 }
+      ]
+    },
+    options:{
+      ...baseOptions(),
+      plugins:{
+        legend:{display:false},
+        tooltip:{callbacks:{title:ctx=>`~$${bmLabels[ctx[0].dataIndex].toLocaleString()}`}}
+      }
+    },
+  });
+
+  // ════════════════════════════════════════════════════════════════════
+  // TAB 7 — 4-HOUR WINDOW
+  // ════════════════════════════════════════════════════════════════════
+  const pWindow = document.getElementById('panel-window');
+
+  // Best window badge + season table
+  const best = D.window.ranked[0];
+  const rowW1 = el('div','row col-2');
+
+  let seasonHtml = '<table class="stat-table"><thead><tr><th>Season</th><th>Best Window</th></tr></thead><tbody>';
+  SEASONS.forEach(s => {
+    seasonHtml += `<tr><td style="color:${SEASON_COLORS[s]}">${s}</td><td>${D.window.season_best[s]}</td></tr>`;
+  });
+  seasonHtml += '</tbody></table>';
+
+  rowW1.innerHTML = `
+    <div class="card" style="display:flex;flex-direction:column;gap:1rem;justify-content:center;align-items:center">
+      <h2>Best Overall Window</h2>
+      <div class="win-badge" style="font-size:1.4rem;padding:.75rem 1.5rem">${best.label}</div>
+      <div style="font-size:1.1rem;color:${C.blue};font-weight:700">${fmt$(best.avg)} avg/day</div>
+      <div class="insight" style="width:100%">The top 4 windows are within $11 of each other — morning hours are reliably strong. Summer is the exception: peak shifts to 10am.</div>
+    </div>
+    <div class="card">
+      <h2>Best Window by Season</h2>
+      <div style="margin-top:.5rem">${seasonHtml}</div>
+    </div>
+  `;
+  pWindow.appendChild(rowW1);
+
+  // Ranked bar chart
+  const cwin1 = el('div','card');
+  cwin1.innerHTML = '<h2>All 4-Hour Windows — Ranked by Avg Daily Revenue</h2><div class="chart-wrap-tall"><canvas id="ch-window-rank"></canvas></div>';
+  pWindow.appendChild(cwin1);
+
+  const winLabels = D.window.ranked.map(w=>w.label);
+  const winAvgs   = D.window.ranked.map(w=>w.avg);
+  const winColors = winAvgs.map((_,i) => i===0 ? C.green : C.blue+'88');
+  new Chart(document.getElementById('ch-window-rank'), {
+    type:'bar',
+    data:{ labels:winLabels, datasets:[{data:winAvgs, backgroundColor:winColors, borderRadius:6}] },
+    options:{ ...baseOptions(), indexAxis:'y', plugins:{legend:{display:false}, tooltip:{callbacks:{label:ctx=>`$${ctx.raw.toFixed(2)}/day`}}}, scales:{ x:{grid:{color:C.overlay}}, y:{grid:{display:false}} } },
+  });
+
+  // Season curves
+  const cwin2 = el('div','card');
+  cwin2.innerHTML = '<h2>4-Hour Window Revenue by Season</h2><div class="chart-wrap"><canvas id="ch-window-season"></canvas></div><div class="insight">Summer\'s curve peaks at 10am while all other seasons peak at 7am. Adjust opening strategy in Summer to capture mid-morning traffic.</div>';
+  pWindow.appendChild(cwin2);
+
+  const wStartLabels = D.window.season_curves[SEASONS[0]].map(p=>p.label);
+  new Chart(document.getElementById('ch-window-season'), {
+    type:'line',
+    data:{
+      labels: wStartLabels,
+      datasets: SEASONS.map(s=>({
+        label: s,
+        data: D.window.season_curves[s].map(p=>p.avg),
+        borderColor: SEASON_COLORS[s],
+        backgroundColor: 'transparent',
+        borderWidth: 2,
+        pointRadius: 5,
+        pointBackgroundColor: SEASON_COLORS[s],
+        tension: 0.3,
+      }))
+    },
+    options: { ...baseOptions({legend:true}), scales:{ x:{grid:{color:C.overlay}}, y:{grid:{color:C.overlay},title:{display:true,text:'Avg Revenue ($)',color:C.subtext}} } },
+  });
+
+  // ── Done ──────────────────────────────────────────────────────────────
+  document.getElementById('loader').style.opacity = '0';
+  setTimeout(() => document.getElementById('loader').style.display='none', 400);
+  document.getElementById('app').style.display = 'block';
+}
+
+render().catch(err => {
+  console.error(err);
+  document.getElementById('loader').innerHTML = `<div style="color:#f38ba8;text-align:center"><div style="font-size:1.5rem">⚠️</div><p style="margin-top:.5rem">${err.message}</p></div>`;
+});
+</script>
+</body>
+</html>

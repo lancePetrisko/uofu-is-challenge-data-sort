@@ -366,13 +366,13 @@ async function render() {
 
   // ── Tab definitions ───────────────────────────────────────────────────
   const tabs = [
-    { id:'demand',  label:'📈 Demand Patterns' },
-    { id:'drinks',  label:'🥤 Drink Popularity' },
-    { id:'weather', label:'🌡️ Weather' },
-    { id:'traffic', label:'🚶 Foot Traffic' },
-    { id:'strategy',label:'⚙️ Strategy' },
-    { id:'ci',      label:'📊 Confidence Interval' },
-    { id:'window',  label:'⏱️ Best 4-Hour Window' },
+    { id:'demand',  label:'Demand Patterns' },
+    { id:'drinks',  label:'Drink Popularity' },
+    { id:'weather', label:'Weather' },
+    { id:'traffic', label:'Foot Traffic' },
+    { id:'strategy',label:'Strategy' },
+    { id:'ci',      label:'Confidence Interval' },
+    { id:'window',  label:'Best 4-Hour Window' },
   ];
 
   const nav     = document.getElementById('tab-nav');
@@ -897,5 +897,13 @@ render().catch(err => {
   document.getElementById('loader').innerHTML = `<div style="color:#f38ba8;text-align:center"><div style="font-size:1.5rem">⚠️</div><p style="margin-top:.5rem">${err.message}</p></div>`;
 });
 </script>
+
+<footer style="text-align:center;padding:2rem;margin-top:2rem;border-top:1px solid var(--overlay);color:var(--muted);font-size:.8rem;">
+  Developed &amp; maintained by
+  <a href="https://www.linkedin.com/in/lance-petrisko-b9994036a/" target="_blank" rel="noopener noreferrer"
+     style="color:var(--blue);text-decoration:none;font-weight:600;">
+    Lance Petrisko
+  </a>
+</footer>
 </body>
 </html>
